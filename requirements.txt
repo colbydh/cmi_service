@@ -1,0 +1,12 @@
+django
+djangorestframework
+django-rest-knox
+psycopg2
+vaderSentiment
+tweepy
+pandas
+tqdm
+xlrd
+pyyaml
+coreapi
+django-rest-swagger

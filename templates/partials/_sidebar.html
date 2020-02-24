@@ -1,0 +1,93 @@
+{% load static %}
+
+<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion toggled" id="accordionSidebar">
+
+  <!-- Sidebar - Brand -->
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{% url 'home' %}">
+        <div class="sidebar-brand-icon rotate-n-15">
+            <i class="fas fa-globe-europe"></i>
+        </div>
+        <div class="sidebar-brand-text mx-3">CMFI</div>
+    </a>
+
+    <!-- Divider -->
+    <hr class="sidebar-divider my-0">
+
+    <!-- Nav Item - Overview -->
+    {% if nav_current == 'Overview' %}
+        <li class="nav-item active">
+    {% else %}
+        <li class="nav-item">
+    {% endif %}
+        <a class="nav-link" href="{% url 'home' %}">
+            <i class="fas fa-fw fa-tachometer-alt"></i>
+            <span>Overview</span>
+        </a>
+    </li>
+
+    <!-- Nav Item - Monitor -->
+    {% if nav_current == 'Montior' %}
+        <li class="nav-item active">
+    {% else %}
+        <li class="nav-item">
+    {% endif %}
+        <a class="nav-link" href="{% url 'monitor' %}">
+            <i class="fas fa-fw fa-comments"></i>
+            <span>Monitor</span>
+        </a>
+    </li>
+
+    <!-- Nav Item - Analyze -->
+    {% if nav_current == 'Analyze' %}
+        <li class="nav-item active">
+    {% else %}
+        <li class="nav-item">
+    {% endif %}
+        <a class="nav-link" href="{% url 'home' %}">
+            <i class="fas fa-fw fa-chart-line"></i>
+            <span>Analyze</span>
+        </a>
+    </li>
+
+    <!-- Nav Item - Alerts -->
+    {% if nav_current == 'Alerts' %}
+        <li class="nav-item active">
+    {% else %}
+        <li class="nav-item">
+    {% endif %}
+        <a class="nav-link" href="{% url 'home' %}">
+            <i class="fas fa-fw fa-exclamation-triangle"></i>
+            <span>Alerts</span>
+        </a>
+    </li>
+
+    <!-- Nav Item - Campaigns -->
+    {% if nav_current == 'Campaigns' %}
+        <li class="nav-item active">
+    {% else %}
+        <li class="nav-item">
+    {% endif %}
+        <a class="nav-link" href="{% url 'home' %}">
+            <i class="fas fa-fw fa-flag"></i>
+            <span>Campaigns</span>
+        </a>
+    </li>
+
+    <!-- Nav Item - Strategies -->
+    {% if nav_current == 'Strategies' %}
+        <li class="nav-item active">
+    {% else %}
+        <li class="nav-item">
+    {% endif %}
+        <a class="nav-link" href="{% url 'home' %}">
+            <i class="fas fa-fw fa-dice-d20"></i>
+            <span>Strategies</span>
+        </a>
+    </li>
+
+    <!-- Sidebar Toggler (Sidebar) -->
+    <!--<div class="text-center d-none d-md-inline">
+        <button class="rounded-circle border-0" id="sidebarToggle"></button>
+    </div>-->
+
+</ul>
