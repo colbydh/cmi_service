@@ -9,7 +9,6 @@ tqdm
 xlrd
 pyyaml
 coreapi
-scrapy
-beautifulsoup4
 newspaper3k
 nltk
+drf-yasg
