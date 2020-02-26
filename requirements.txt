@@ -1,7 +1,7 @@
 django
 djangorestframework
 django-rest-knox
-psycopg2
+psycopg2-binary
 vaderSentiment
 tweepy
 pandas
@@ -12,3 +12,4 @@ coreapi
 newspaper3k
 nltk
 drf-yasg
+whitenoise

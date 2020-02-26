@@ -2,52 +2,22 @@ version: '3.7'
 
 services:
 
-  morpheus:
-    image: morpheus/app:latest
-    container_name: morpheus
+  cmi-app:
+    image: cmi-service/app:latest
+    container_name: cmi-service
     build:
       context: ../
       dockerfile: Dockerfile
     restart: unless-stopped
-    environment:
-      APP_ENV: "prod"
-      APP_DEBUG: "False"
-      MONGODB_DATABASE: morpheusDb
-      MONGODB_USERNAME: morpheusUser
-      MONGODB_PASSWORD: morpheus1234!
-      MONGODB_HOSTNAME: morpheus-mongodb
-      NEWS_API_KEY: 42f0ce8dc6a34ea2a00c6ca559c1ed5f
-    #volumes:
-    # - appdata:/var/www
-    depends_on:
-      - morpheus-mongodb
+    command: python manage.py runserver 0.0.0.0:8000
     networks:
       - frontend
       - backend
     ports:
-      - '0.0.0.0:5000:80'
-
-  cmi-postgres:
-    container_name: cmi-postgres
-    restart: unless-stopped
-    build:
-      context: ../database
-      dockerfile: Dockerfile-Postgres
-    environment:
-      POSTGRES_USER: cmi_user
-      POSTGRES_PASSWORD: cmi1234!
-      POSTGRES_DB: cmi
-    volumes:
-      - pg_data:/var/lib/postgresql/data/pg_data
-    ports:
-      - '5432:6432'
-    networks:
-      - backend
+      - '0.0.0.0:9000:8000'
 
 networks:
   frontend:
     driver: bridge
   backend:
     driver: bridge
-volumes:
-  pg_data:
