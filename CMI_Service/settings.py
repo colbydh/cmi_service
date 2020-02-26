@@ -23,7 +23,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", default='foo')
 
 DEBUG = int(os.environ.get("DEBUG", default=1))
 
-ALLOWED_HOSTS = ['cmi-service.azurewebsites.net']
+ALLOWED_HOSTS = ['cmi-service.azurewebsites.net', '127.0.0.1']
 
 MAX_RECORDS_TO_RETURN = 100
 
@@ -110,6 +110,14 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+}
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'basic': {
+            'type': 'basic'
+        }
+    },
 }
 
 
