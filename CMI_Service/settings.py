@@ -23,7 +23,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", default='foo')
 
 DEBUG = int(os.environ.get("DEBUG", default=1))
 
-ALLOWED_HOSTS = ['cmi-service.azurewebsites.net', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
 
 MAX_RECORDS_TO_RETURN = 100
 
@@ -170,5 +170,5 @@ STATICFILES_LOCATION = 'static'
 STATIC_URL = '/static/'
 STATIC_ROOT = 'static'
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'CMI_Service/static')
+    os.path.join(BASE_DIR, 'static')
 ]
