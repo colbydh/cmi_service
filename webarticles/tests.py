@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from webarticles.models import Site
+from webarticles.models import Site, Url, Article
 from webarticles.serializers import SiteHyperlinkSerializer, SiteFullSerializer
 
 client = APIClient()
@@ -146,4 +146,20 @@ class NewsSiteTest(TestCase):
 
 
 class NewsArticleTest(TestCase):
-    pass
+    """ Test Module for News Articles """
+
+    def setUp(self):
+        self.site_one = Site.objects.create(name='Site One', domain='Domain One', base_url='http://www.siteone.com')
+        self.url_one = Url.objects.create(expanded='http://www.siteone.com', raw='http://www.siteone.com',
+                                          site=self.site_one)
+        self.article_one = Article.objects.create(expanded='http://www.siteone.com', text='Test article',
+                                                  meta={'data': 'data'})
+
+    def test_get_all_hyperlinked(self):
+        pass
+
+    def test_get_all_full(self):
+        pass
+
+    def test_get_single_full(self):
+        pass

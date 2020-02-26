@@ -1,4 +1,5 @@
 import os
+from datetime import time
 
 import newspaper
 from tqdm import tqdm
@@ -52,10 +53,21 @@ def create_article_from_url(url):
     try:
         site = Site.objects.get(base_url__exact=article.source_url)
     except:
-        site = Site.objects.create(name=article.meta_data['og']['site_name'], domain=article.source_url,
-                                   base_url=article.source_url)
+        if url.canonical != article.canonical_link:
+            url.canonical = article.canonical_link
+            article = Article(url=url.canonical)
+            rtn_article = get_article_from_article(article, url)
+            try:
+                site = Site.objects.get(base_url__exact=article.source_url)
+            except:
+                site = Site.objects.create(name=article.meta_data['og']['site_name'], domain=article.source_url,
+                                           base_url=article.source_url)
+        else:
+            site = Site.objects.create(name=article.meta_data['og']['site_name'], domain=article.source_url,
+                                       base_url=article.source_url)
 
     # Add site to url
+    rtn_article.save()
     url.site = site
     url.article = rtn_article
     url.scraped = True
@@ -64,11 +76,21 @@ def create_article_from_url(url):
 
 # Returns the main article data from the given url
 def get_article_from_article(article, url):
-    article.download()
+
+    keep_trying = True
+
+    while keep_trying:
+        try:
+            article.download()
+            keep_trying = False
+        except Exception as e:
+            print(e)
+            time.sleep(1)
+
     article.parse()
     article.nlp()
 
-    return WebArticle.objects.create(
+    return WebArticle(
         expanded_url=url.expanded,
         authors=article.authors,
         keywords=article.keywords,

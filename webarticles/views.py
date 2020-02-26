@@ -223,17 +223,7 @@ class ArticleViewSet(viewsets.ViewSet):
         serializer = ArticleFullSerializer(articles, many=True)
         return Response(serializer.data)
 
-    def create(self, request):
-        Response({})
 
     def retrieve(self, request, pk=None):
         Response({})
 
-    def update(self, request, pk=None):
-        Response({})
-
-    def partial_update(self, request, pk=None):
-        Response({})
-
-    def destroy(self, request, pk=None):
-        Response({})

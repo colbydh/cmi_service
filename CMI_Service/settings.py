@@ -93,11 +93,14 @@ DATABASES = {
 DATABASES = {
     "default": {
         "ENGINE": os.environ.get("SQL_ENGINE", "django.db.backends.postgresql"),
-        "NAME": os.environ.get("SQL_DATABASE", 'postgres'),
-        "USER": os.environ.get("SQL_USER", "cmi_admin@cmi-db"),
-        "PASSWORD": os.environ.get("SQL_PASSWORD", "1qaz2wsx!QAZ@WSX"),
-        "HOST": os.environ.get("SQL_HOST", "cmi-db.postgres.database.azure.com"),
-        "PORT": os.environ.get("SQL_PORT", "5432"),
+        "NAME": os.environ.get("DATABASE_NAME", ''),
+        "USER": os.environ.get("DATABASE_USER", ""),
+        "PASSWORD": os.environ.get("DATABASE_PASSWORD", ""),
+        "HOST": os.environ.get("DATABASE_HOST", ""),
+        "PORT": os.environ.get("DATABASE_PORT", ""),
+        "OPTIONS": {
+            "sslmode": "require"
+        }
     }
 }
 

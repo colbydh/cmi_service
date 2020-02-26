@@ -69,6 +69,7 @@ class Url(models.Model):
 
     raw = models.CharField(null=True, max_length=MAX_URL_LEN)
     expanded = models.CharField(null=True, max_length=MAX_URL_LEN, unique=True)
+    canonical = models.CharField(null=True, max_length=MAX_URL_LEN, unique=True)
     scraped = models.BooleanField(default=False)
 
     # relationships

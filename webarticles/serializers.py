@@ -28,3 +28,11 @@ class ArticleFullSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
         fields = '__all__'
+
+
+class ArticleHyerlinkedSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name='news-article-detail')
+
+    class Meta:
+        model = Article
+        fields = ['url']
