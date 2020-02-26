@@ -23,7 +23,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", default='foo')
 
 DEBUG = int(os.environ.get("DEBUG", default=1))
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['cmi-service.azurewebsites.net']
 
 MAX_RECORDS_TO_RETURN = 100
 
