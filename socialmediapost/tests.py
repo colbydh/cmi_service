@@ -221,4 +221,26 @@ class SocialMediaPostTest(TestCase):
         self.assertEqual(response.data, test_response)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_get_all_from_empty_db(self):
+        SocialMediaPost.objects.all().delete()
+
+        limit = 100
+        offset = 0
+        # From db direct
+        posts = SocialMediaPost.objects.all().order_by('-created_at')[offset:offset + limit]
+
+        # from api
+        response = client.get(reverse('socialmedia-post-list'))
+
+        context = {'request': RequestFactory().get('/')}
+
+        serializer = SocialMediaPostHyperLinkListSerializer(posts, many=True, context=context)
+        test_response = dict(
+            records=0,
+            next_offset=-1,
+            data=[]
+        )
+        self.assertEqual(response.data, test_response)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
 

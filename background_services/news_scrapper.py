@@ -5,10 +5,10 @@ from tqdm import tqdm
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "CMI_Service.settings")
 import django
+
 django.setup()
 from newspaper import Article
 from webarticles.models import Article as WebArticle
-
 
 # Grabs the title from the html
 from webarticles.models import Site, Url
@@ -34,16 +34,26 @@ def get_site_base_url(html):
 
 # Returns the main article data from the given url
 def create_article_from_url(url):
-
     # Get and parse the article
     article = Article(url=url.expanded)
 
     # Create article
+    if WebArticle.objects.filter(expanded_url__icontains=url.expanded).exists():
+        rtn_article = WebArticle.objects.get(expanded_url__icontains=url.expanded)
+        if not url.article:
+            url.article = rtn_article
+        url.scraped = True
+        url.save()
+        return
+
     rtn_article = get_article_from_article(article, url)
 
     # Now see if a site exists for this site if not then create one
-    site = Site.objects.create(name=article.meta_data['og']['site_name'], domain=article.source_url,
-                               base_url=article.source_url)
+    try:
+        site = Site.objects.get(base_url__exact=article.source_url)
+    except:
+        site = Site.objects.create(name=article.meta_data['og']['site_name'], domain=article.source_url,
+                                   base_url=article.source_url)
 
     # Add site to url
     url.site = site
@@ -82,11 +92,11 @@ def crawl_sites_getting_news_articles():
         for article in tqdm(paper.articles, total=paper.size()):
 
             # See if url already exists in db
-            if Url.objects.filter(expanded__icontains=article.url): # Exists
+            if Url.objects.filter(expanded__icontains=article.url):  # Exists
                 url = Url.objects.get(expanded__icontains=article.url)
                 if url.article and url.scraped:
                     continue
-            else: # Doesn't exist
+            else:  # Doesn't exist
                 url = Url.objects.create(raw=article.url, expanded=article.url, site=site)
 
             # Now parse the url for the article and create one
@@ -108,6 +118,5 @@ def crawl_unscraped_urls():
 
 # Start
 if __name__ == '__main__':
-    #crawl_sites_getting_news_articles()
+    # crawl_sites_getting_news_articles()
     crawl_unscraped_urls()
-

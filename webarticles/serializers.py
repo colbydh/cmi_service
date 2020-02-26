@@ -21,7 +21,7 @@ class SiteFullSerializer(serializers.ModelSerializer):
 class UrlSerializer(serializers.ModelSerializer):
     class Meta:
         model = Url
-        fields = 'expanded'
+        fields = ['expanded']
 
 
 class ArticleFullSerializer(serializers.ModelSerializer):
