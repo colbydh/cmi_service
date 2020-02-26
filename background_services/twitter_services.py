@@ -4,32 +4,23 @@ import pandas as pd
 from background_services.config import *
 import time
 from tqdm import tqdm
-
-# Django imports so you can delete and add your Databricks imports
+from django.db import transaction
 from django.conf import settings
 from django.utils.timezone import make_aware
-# end Django imports
 
-from background_services import location_finder
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-
-from background_services.location_finder import get_coords_using_here, get_coords_using_opencage, \
-    get_coords_using_locationiq
-
-# More django imports needs to be lower than background services to not add redundancies
-# Can also remove as needed since you will be using databricks
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "CMI_Service.settings")
 import django
-
 django.setup()
-from common.models import SocialMediaUser, SocialMediaPost
+from socialmediauser.models import SocialMediaUser
+from socialmediapost.models import SocialMediaPost, Hashtag
+from webarticles.models import Url
 
 auth = tweepy.OAuthHandler(TWITTER_APP_KEY, TWITTER_APP_SECRET)
 auth.set_access_token(TWITTER_KEY, TWITTER_SECRET)
 api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True, retry_count=10, retry_delay=60)
 
 
-# Creates or updates users from the provided ids
+# Creates or updates users from the provided ids. Adds the influencer to the list of follows for each record.
 def update_create_user_data_from_ids_of_followers(id_list, influencer):
     users_return = []
 
@@ -38,12 +29,13 @@ def update_create_user_data_from_ids_of_followers(id_list, influencer):
         return users_return
 
     # First check to see if the ids are already in the database
+    # Try and add a way to update all users at once!
     ids_to_get = []
     users = SocialMediaUser.objects.filter(twitter_user_id__in=id_list)
-    for user in tqdm(users, total=len(users)):
-        user.twitter_follows.add(influencer)
-        user.save()
-        users_return.append(user)
+    with transaction.atomic():
+        for user in tqdm(users, total=len(users)):
+            user.twitter_follows.add(influencer)
+            users_return.append(user)
 
     # Get the ids not in the database
     if len(users) <= 0:
@@ -90,6 +82,7 @@ def update_create_user_data_from_ids_of_followers(id_list, influencer):
 
 
 # Get the twitter ids from twitter
+# Helper function when creating influcers from the excel files
 def get_missing_twitter_ids():
     try:
         influencer_records = SocialMediaUser.objects.filter(twitter_user_id__isnull=True, is_influencer=True).values()
@@ -130,6 +123,7 @@ def get_missing_twitter_ids():
         print(e)
 
 
+# Updates the twitter followers and follows for the provided user key
 def update_twitter_followers_single(is_initial, pk):
     elapsed_time = 60
     # Save the ids to the user
@@ -137,23 +131,34 @@ def update_twitter_followers_single(is_initial, pk):
     if user is None:
         return
 
+    # First see how many followers the user has already
+    followers = user.get_follower_count()
+
+    # Now determine what page to start on based on 5000 limit
+    page = int(followers / 5000)
+
     # Get the follower ids
     try:
-        for follower_ids in tweepy.Cursor(api.followers_ids, user_id=user.twitter_user_id).pages():
-
+        while True:
             # Pause as needed for rate limiting
             if elapsed_time < 60:
                 time.sleep(60 - elapsed_time)
 
+            follower_ids = api.followers_ids(page=page, user_id=user.twitter_user_id)
+
             # Start timer
             time_start = time.time()
 
-            # Now get the user info for all the followers
-            new_followers = update_create_user_data_from_ids_of_followers(follower_ids, user)
+            if follower_ids:
+                # Now get the user info for all the followers
+                new_followers = update_create_user_data_from_ids_of_followers(follower_ids, user)
 
-            # Update users followers
-            user.twitter_followers.add(*new_followers)
-            user.save()
+                # Update users followers
+                user.twitter_followers.add(*new_followers)
+            else:
+                break
+
+            page += 1
 
             elapsed_time = time.time() - time_start
 
@@ -161,10 +166,12 @@ def update_twitter_followers_single(is_initial, pk):
         print(e, ' pk: ', pk)
 
 
+# Updates the users twitter followers and follows for a list of records
 def update_twitter_followers_multi(pks):
     pass
 
 
+# Updates the followers and follows for all records
 def update_twitter_followers_all(is_initial=False):
     influencer_records = SocialMediaUser.objects.filter(twitter_user_id__isnull=False, is_influencer=True,
                                                         twitter_followers=[]).values()
@@ -209,6 +216,7 @@ def update_twitter_followers_all(is_initial=False):
             print(e)
 
 
+# Main entry to determine which twitter update function to run
 def update_twitter_followers(is_initial, pk=-1):
     if isinstance(pk, list):
         update_twitter_followers_multi(pk)
@@ -220,10 +228,38 @@ def update_twitter_followers(is_initial, pk=-1):
         update_twitter_followers_single(is_initial, pk)
 
 
+# Updates the twitter users follows field
+# Not being used currently
 def update_twitter_following():
     pass
 
 
+# creates a new user from the provided user object from tweepy
+def create_user_from_twitter_user(user):
+    new_user = SocialMediaUser(name=user.name,
+                               twitter_user_id=user.id,
+                               twitter_screen_name=user.screen_name,
+                               location=user.location,
+                               is_influencer=False,
+                               twitter_posts_count=user.statuses_count
+                               )
+    new_user.save()
+    return new_user
+
+
+# Creates a new twitter user record in db based on the twitter id
+# Goes to twitter api and gets the info
+def create_user_from_twitter_id(twitter_id):
+    # Get the user object from twitter
+    try:
+        twitter_user = api.get_user(user_id=twitter_id)
+        return create_user_from_twitter_user(twitter_user)
+    except Exception as e:
+        print(e)
+        return None
+
+
+# Main entry into getting previous tweets for all or single user
 def get_past_tweets(pk):
     if isinstance(pk, list):
         update_twitter_followers_multi(pk)
@@ -237,6 +273,7 @@ def get_past_tweets(pk):
         get_past_tweets_for_user(pk)
 
 
+# Get the past tweets from the provided user key. Used to pre-populate the db
 def get_past_tweets_for_user(pk):
     # Get the user to get tweets for
     user = SocialMediaUser.objects.get(pk=pk)
@@ -264,37 +301,26 @@ def get_past_tweets_for_user(pk):
         elapsed_time = time.time() - time_start
 
 
+# Processes the re tweet and stores in db
 def process_restatus(status, user):
     # Find the original message
     try:
         post = SocialMediaPost.objects.get(post_id=status.retweeted_status.id)
         post.reposted_by.add(user)
-        post.save()
     except Exception as e:
         # See if the original author is in the db
         if SocialMediaUser.objects.filter(twitter_user_id=status.retweeted_status.author.id).exists():
             original_user = SocialMediaUser.objects.get(twitter_user_id=status.retweeted_status.author.id)
             new_post = process_status(status.retweeted_status, original_user)
             new_post.reposted_by.add(user)
-            new_post.save()
         else:
             # Need to crete the new user
             new_user = create_user_from_twitter_user(status.retweeted_status.author)
             new_post = process_status(status.retweeted_status, new_user)
             new_post.reposted_by.add(user)
-            new_post.save()
 
 
-def create_user_from_twitter_id(twitter_id):
-    # Get the user object from twitter
-    try:
-        twitter_user = api.get_user(user_id=twitter_id)
-    except Exception as e:
-        print(e)
-        return None
-    return create_user_from_twitter_user(twitter_user)
-
-
+# Process the twitter status and saves to db
 def process_status(status, user):
     # First check to see if post is already in db
     if SocialMediaPost.objects.filter(post_id=status.id).exists():
@@ -305,11 +331,6 @@ def process_status(status, user):
 
     # Created At
     created_at = make_aware(status.created_at)
-
-    # Hashtags
-    hashtags = []
-    for tag in status.entities['hashtags']:
-        hashtags.append(tag['text'])
 
     # Post ID
     post_id = status.id
@@ -335,7 +356,6 @@ def process_status(status, user):
     post = SocialMediaPost(
         author=user,
         created_at=created_at,
-        hashtags=hashtags,
         post_id=post_id,
         in_reply_to_user_id=in_reply_to_user_id,
         in_reply_to_post_id=in_reply_to_post_id,
@@ -370,16 +390,28 @@ def process_status(status, user):
 
         elapsed_time = time.time() - time_start
 
+    # Hashtags
+    for tag in status.entities['hashtags']:
+        # See if the tag exists
+        try:
+            tag_obj = Hashtag.objects.get(text=tag['text'])
+        except:
+            # Create new user
+            tag_obj = Hashtag(text=tag['text'])
+            tag_obj.save()
+        tag_obj.posts.add(post)
+
+    # Urls
+    for url in status.entities['urls']:
+        try:
+            url_obj = Url.objects.get(expanded=url['expanded_url'])
+        except:
+            # Create new user
+            url_obj = Url(raw=url['url'], expanded=url['expanded_url'])
+            url_obj.save()
+        url_obj.posts.add(post)
+
     return post
 
 
-def create_user_from_twitter_user(user):
-    new_user = SocialMediaUser(name=user.name,
-                               twitter_user_id=user.id,
-                               twitter_screen_name=user.screen_name,
-                               location=user.location,
-                               is_influencer=False,
-                               twitter_posts_count=user.statuses_count
-                               )
-    new_user.save()
-    return new_user
+

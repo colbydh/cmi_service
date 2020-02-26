@@ -25,6 +25,7 @@ DEBUG = int(os.environ.get("DEBUG", default=1))
 
 ALLOWED_HOSTS = []
 
+MAX_RECORDS_TO_RETURN = 100
 
 # Application definition
 
@@ -35,10 +36,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'common.apps.CommonConfig',
+    'socialmediapost.apps.SocialmediapostConfig',
+    'socialmediauser.apps.SocialmediauserConfig',
+    'webarticles.apps.WebarticlesConfig',
     'rest_framework',
     'drf_yasg',
-    #'frontend.apps.FrontendConfig'
 ]
 
 MIDDLEWARE = [

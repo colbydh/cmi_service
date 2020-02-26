@@ -5,29 +5,28 @@ import tweepy
 from tqdm import tqdm
 import time
 import os
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "CMI_Service.settings")
 import pandas as pd
 from background_services.config import *
 from background_services.twitter_services import get_missing_twitter_ids, update_twitter_followers, get_past_tweets
 from background_services.location_finder import get_coords
+
+
 
 # Django imports so you can delete and add your Databricks imports
 from django.conf import settings
 from django.utils.timezone import make_aware
 # end Django imports
 
-from background_services import location_finder
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-
-from background_services.location_finder import get_coords_using_here, get_coords_using_opencage, \
-    get_coords_using_locationiq
 
 # More django imports needs to be lower than background services to not add redundancies
 # Can also remove as needed since you will be using databricks
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "CMI_Service.settings")
+
 import django
+from socialmediauser.models import SocialMediaUser
 
 django.setup()
-from common.models import SocialMediaUser
+
 
 
 # End more django imports and setup
@@ -183,27 +182,6 @@ def get_graph_network():
     pass
 
 
-def switch_to_many_to_many():
-    users = SocialMediaUser.objects.all()
-
-    # Loop through and add the many to many
-    for user in tqdm(users, total=len(users)):
-        if user.twitter_followers.count() > 0:
-            continue
-        if len(user.twitter_followers_ids) >= 0:
-            followers = list(SocialMediaUser.objects.filter(twitter_user_id__in=user.twitter_followers_ids))
-            user.twitter_followers.add(*followers)
-            user.save()
-            del followers
-        if user.twitter_follows.count() > 0:
-            continue
-        if len(user.twitter_follows_ids) > 0:
-            friends = list(SocialMediaUser.objects.filter(twitter_user_id__in=user.twitter_follows_ids))
-            user.twitter_follows.add(*friends)
-            user.save()
-            del friends
-
-
 def temp_populate_db():
     with open('../db.json', encoding="utf8") as f:
         systems = json.load(f)
@@ -247,12 +225,13 @@ if __name__ == '__main__':
     # get_missing_twitter_ids()
 
     # Update followers
-    #start = 8  # 123 for get followers
-    #for i in range(start, SocialMediaUser.objects.filter(is_influencer=True).count()):
-    #    # update_twitter_followers(is_initial=True, pk=i)
-    #    get_past_tweets(i)
+    start = 2
+    for i in range(start, SocialMediaUser.objects.filter(is_influencer=True).count()):
+        #update_twitter_followers(is_initial=True, pk=i) # 123
+        print('### Getting Tweets for User pk: ', i)
+        get_past_tweets(i) # 8
 
-    get_past_tweets(2058)
+    #get_past_tweets(2058)
 
     # get lat lons
     # get_lat_lon_for_influencers()

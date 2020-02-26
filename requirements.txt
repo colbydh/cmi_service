@@ -9,4 +9,7 @@ tqdm
 xlrd
 pyyaml
 coreapi
-django-rest-swagger
+scrapy
+beautifulsoup4
+newspaper3k
+nltk

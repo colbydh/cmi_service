@@ -96,3 +96,6 @@ def get_coords_using_locationiq(location, elapsed_time):
     except Exception as e:
         #print('Error in get coords from location iq: ', data)
         return None, None
+
+
+
