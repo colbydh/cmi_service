@@ -168,7 +168,7 @@ STATICFILES_FINDERS = [
 
 STATICFILES_LOCATION = 'static'
 STATIC_URL = '/static/'
-STATIC_ROOT = 'static'
+STATIC_ROOT = 'CMI_Service/static'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static')
 ]
